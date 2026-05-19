@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: processor-api
+  threads:
+    virtual:
+      enabled: true
+  cloud:
+    aws:
+      region:
+        static: ${AWS_REGION:us-east-1}
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
+        session-token: ${AWS_SESSION_TOKEN}
+      sqs:
+        queue-diagram-process: ${SQS_PROCESS_URL:https://sqs.us-east-1.amazonaws.com/481824691194/diagram-process}
+        queue-diagram-status-update: ${SQS_STATUS_URL:https://sqs.us-east-1.amazonaws.com/481824691194/diagram-status-update}
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY}
+      model-name: gemini-3.1-flash-lite
+      timeout: 60s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.hackaton.processor: INFO
+    io.awspring.cloud.sqs: INFO
+    dev.langchain4j: DEBUG
