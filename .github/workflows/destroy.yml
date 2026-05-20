@@ -1,0 +1,20 @@
+name: Destroy Processor API
+
+on:
+  workflow_dispatch:
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stop and remove container on EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Stopping Processor API container..."
+            docker stop processor-api || true
+            docker rm processor-api || true
+            echo "Processor API stopped successfully."

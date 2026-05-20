@@ -1,0 +1,96 @@
+name: Deploy Processor API
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'Dockerfile'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '21'
+
+      # Usa 'mvn' direto pois o Dockerfile não utiliza o wrapper
+      - name: Extract Maven Version
+        id: extract_version
+        run: |
+          POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "APP_VERSION=$POM_VERSION" >> $GITHUB_ENV
+          echo "Versão identificada no pom.xml: $POM_VERSION"
+          
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: hackaton-processor-api
+          IMAGE_TAG: ${{ env.APP_VERSION }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ env.APP_VERSION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: ECR_REGISTRY,IMAGE_TAG,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_SESSION_TOKEN,GEMINI_API_KEY
+          script: |
+            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+            export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+            export AWS_DEFAULT_REGION=us-east-1
+            
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+            
+            docker pull $ECR_REGISTRY/hackaton-processor-api:$IMAGE_TAG
+            
+            docker stop processor-api || true
+            docker rm processor-api || true
+            
+            # Subimos na porta 8082 para não conflitar com as outras APIs
+            docker run -d --name processor-api \
+              --net hackaton_net \
+              --restart always \
+              -p 8082:8080 \
+              --env-file /home/ubuntu/.env \
+              -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+              -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+              -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+              -e GEMINI_API_KEY=$GEMINI_API_KEY \
+              -e SQS_PROCESS_URL="https://sqs.us-east-1.amazonaws.com/481824691194/diagram-process" \
+              -e SQS_STATUS_URL="https://sqs.us-east-1.amazonaws.com/481824691194/diagram-status-update" \
+              $ECR_REGISTRY/hackaton-processor-api:$IMAGE_TAG
