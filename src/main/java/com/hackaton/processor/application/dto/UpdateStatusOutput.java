@@ -3,6 +3,7 @@ package com.hackaton.processor.application.dto;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,7 +14,7 @@ public class UpdateStatusOutput {
     private String titulo;
     private String status;
     private ReportDTO report;
-    private String createdAt;
+    private LocalDateTime createdAt;
     private String notes;
 
     @Data

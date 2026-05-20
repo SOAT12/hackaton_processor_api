@@ -29,7 +29,7 @@ public class AnalyzeDiagramUseCase {
                 log.warn("IA não identificou componentes no diagrama ID: {}", input.getDiagramId());
                 messagePublisherGateway.publishStatus(
                         input.getDiagramId(),
-                        "ERROR",
+                        "FAILED",
                         null,
                         "Não foi possível identificar componentes no diagrama. Certifique-se de que a imagem é um diagrama de arquitetura legível."
                 );
@@ -48,10 +48,11 @@ public class AnalyzeDiagramUseCase {
 
             messagePublisherGateway.publishStatus(
                     input.getDiagramId(),
-                    "ERROR",
+                    "FAILED",
                     null,
                     "Erro no processamento de IA: " + e.getMessage()
             );
         }
+
     }
 }

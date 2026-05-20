@@ -85,7 +85,7 @@ class AnalyzeDiagramUseCaseTest {
             // Assert
             verify(messagePublisherGateway, times(1)).publishStatus(
                     eq(diagramId),
-                    eq("ERROR"),
+                    eq("FAILED"),
                     isNull(),
                     contains("Não foi possível identificar componentes")
             );
@@ -110,7 +110,7 @@ class AnalyzeDiagramUseCaseTest {
             // Assert
             verify(messagePublisherGateway, times(1)).publishStatus(
                     eq(diagramId),
-                    eq("ERROR"),
+                    eq("FAILED"),
                     isNull(),
                     contains("Não foi possível identificar componentes")
             );
@@ -134,7 +134,7 @@ class AnalyzeDiagramUseCaseTest {
             // Assert
             verify(messagePublisherGateway, times(1)).publishStatus(
                     eq(diagramId),
-                    eq("ERROR"),
+                    eq("FAILED"),
                     isNull(),
                     contains("Erro no processamento de IA: IA Failure")
             );
