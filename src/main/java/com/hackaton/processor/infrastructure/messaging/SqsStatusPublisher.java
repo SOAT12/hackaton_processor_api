@@ -31,7 +31,7 @@ public class SqsStatusPublisher implements MessagePublisherGateway {
                 .diagramId(diagramId.toString())
                 .titulo("Análise de Arquitetura Gerada")
                 .status(status)
-                .createdAt(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .createdAt(LocalDateTime.now())
                 .notes(notes);
 
         if (analysis != null) {
