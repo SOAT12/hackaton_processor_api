@@ -94,7 +94,7 @@ jobs:
 
 
       - name: Scan Dockerfile's base images for vulnerabilities with Trivy
-        uses: aquasecurity/trivy-action@0.22.0
+        uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
