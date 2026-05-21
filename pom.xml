@@ -130,6 +130,12 @@
                                     </limits>
                                 </rule>
                             </rules>
+                            <excludes>
+                                <exclude>com/hackaton/processor/ProcessorApplication.class</exclude>
+                                <exclude>com/hackaton/processor/infrastructure/config/**</exclude>
+                                <exclude>com/hackaton/processor/application/dto/**</exclude>
+                                <exclude>com/hackaton/processor/domain/entity/**</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
