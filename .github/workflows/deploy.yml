@@ -31,7 +31,7 @@ jobs:
           echo "Versão identificada no pom.xml: $POM_VERSION"
           
       - name: Build with Maven
-        run: mvn clean package -DskipTests
+        run: mvn clean package
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2

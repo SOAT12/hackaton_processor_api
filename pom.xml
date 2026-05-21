@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.hackaton</groupId>
     <artifactId>processor-api</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
     <name>processor-api</name>
     <description>Processor de IA - Hackaton</description>
 
@@ -51,6 +51,11 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>8.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
