@@ -1,7 +1,8 @@
 package com.hackaton.processor.infrastructure.messaging;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackaton.processor.domain.entity.DiagramAnalysis;
-import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -10,27 +11,27 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.Spy;
 import org.springframework.test.util.ReflectionTestUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SqsStatusPublisher Unit Tests")
 class SqsStatusPublisherTest {
 
     @Mock
-    private SqsTemplate sqsTemplate;
+    private SqsAsyncClient sqsAsyncClient;
 
-    @Spy
-    private ObjectMapper objectMapper = new ObjectMapper();
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private SqsStatusPublisher sqsStatusPublisher;
@@ -43,36 +44,77 @@ class SqsStatusPublisherTest {
     }
 
     @Nested
-    @DisplayName("PublishStatus Method Scenarios")
-    class PublishStatusScenarios {
+    @DisplayName("Tests for publishStatus method")
+    class PublishStatusTests {
 
         @Test
-        @DisplayName("Should successfully publish PROCESSED status with report")
-        void shouldPublishProcessedStatus() {
+        @DisplayName("Should successfully publish PROCESSED status with full report")
+        void shouldPublishProcessedStatusWithReport() throws JsonProcessingException {
             // Arrange
             UUID diagramId = UUID.randomUUID();
             DiagramAnalysis analysis = new DiagramAnalysis(
-                    List.of("Comp"), List.of("Risk"), List.of("Rec")
+                    List.of("Component A"), 
+                    List.of("Risk B"), 
+                    List.of("Recommendation C")
             );
+            String status = "PROCESSED";
+            String notes = "Analysis completed successfully";
+            String expectedJson = "{\"diagramId\":\"" + diagramId + "\", \"status\":\"PROCESSED\"}";
+
+            when(objectMapper.writeValueAsString(any())).thenReturn(expectedJson);
 
             // Act
-            sqsStatusPublisher.publishStatus(diagramId, "PROCESSED", analysis, "Success notes");
+            sqsStatusPublisher.publishStatus(diagramId, status, analysis, notes);
 
             // Assert
-            verify(sqsTemplate, times(1)).send(eq(queueUrl), any(Object.class));
+            verify(objectMapper, times(1)).writeValueAsString(any());
+            verify(sqsAsyncClient, times(1)).sendMessage(argThat((SendMessageRequest request) -> 
+                request.queueUrl().equals(queueUrl) && request.messageBody().equals(expectedJson)
+            ));
         }
 
         @Test
         @DisplayName("Should successfully publish ERROR status without report")
-        void shouldPublishErrorStatus() {
+        void shouldPublishErrorStatusWithoutReport() throws JsonProcessingException {
             // Arrange
             UUID diagramId = UUID.randomUUID();
+            String status = "ERROR";
+            String notes = "Failed to process diagram";
+            String expectedJson = "{\"diagramId\":\"" + diagramId + "\", \"status\":\"ERROR\"}";
+
+            when(objectMapper.writeValueAsString(any())).thenReturn(expectedJson);
 
             // Act
-            sqsStatusPublisher.publishStatus(diagramId, "ERROR", null, "Error notes");
+            sqsStatusPublisher.publishStatus(diagramId, status, null, notes);
 
             // Assert
-            verify(sqsTemplate, times(1)).send(eq(queueUrl), any(Object.class));
+            verify(objectMapper, times(1)).writeValueAsString(any());
+            verify(sqsAsyncClient, times(1)).sendMessage(argThat((SendMessageRequest request) -> 
+                request.queueUrl().equals(queueUrl) && request.messageBody().equals(expectedJson)
+            ));
+        }
+
+        @Test
+        @DisplayName("Should throw RuntimeException when JSON processing fails")
+        void shouldThrowExceptionWhenJsonProcessingFails() throws JsonProcessingException {
+            // Arrange
+            UUID diagramId = UUID.randomUUID();
+            when(objectMapper.writeValueAsString(any())).thenThrow(new MockJsonProcessingException("JSON Error"));
+
+            // Act & Assert
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> 
+                sqsStatusPublisher.publishStatus(diagramId, "ERROR", null, "Notes")
+            , "Should throw RuntimeException on JSON failure");
+
+            assertEquals("Falha na integração com sistema de mensageria", exception.getMessage(), "Exception message should match");
+            verify(sqsAsyncClient, never()).sendMessage(any(SendMessageRequest.class));
+        }
+    }
+
+    // Helper class to mock JsonProcessingException
+    private static class MockJsonProcessingException extends JsonProcessingException {
+        protected MockJsonProcessingException(String msg) {
+            super(msg);
         }
     }
 }

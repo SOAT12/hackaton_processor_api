@@ -8,10 +8,12 @@ import org.springframework.context.annotation.Import;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import org.springframework.beans.factory.annotation.Value;
+import java.time.Duration;
 
 @Configuration
 @Import(SqsBootstrapConfiguration.class)
@@ -32,7 +34,10 @@ public class SqsConfig {
     @Bean
     public SqsAsyncClient sqsAsyncClient() {
         var builder = SqsAsyncClient.builder()
-                .region(Region.of(region));
+                .region(Region.of(region))
+                .httpClientBuilder(NettyNioAsyncHttpClient.builder()
+                        .connectionTimeout(Duration.ofSeconds(10))
+                        .readTimeout(Duration.ofSeconds(10)));
 
         if (sessionToken != null && !sessionToken.isEmpty()) {
             builder.credentialsProvider(StaticCredentialsProvider.create(
