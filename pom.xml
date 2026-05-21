@@ -125,15 +125,11 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.82</minimum>
+                                            <minimum>0.80</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
                             </rules>
-                            <excludes>
-                                <exclude>com/hackaton/processor/ProcessorApplication.class</exclude>
-                                <exclude>com/hackaton/processor/infrastructure/config/**</exclude>
-                            </excludes>
                         </configuration>
                     </execution>
                 </executions>

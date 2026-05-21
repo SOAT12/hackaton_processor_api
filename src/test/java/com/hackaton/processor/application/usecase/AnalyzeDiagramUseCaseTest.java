@@ -67,7 +67,7 @@ class AnalyzeDiagramUseCaseTest {
         }
 
         @Test
-        @DisplayName("Should publish error status when IA returns no components")
+        @DisplayName("Should publish FAILED status when IA returns no components")
         void shouldPublishErrorWhenNoComponents() {
             // Arrange
             UUID diagramId = UUID.randomUUID();
@@ -92,7 +92,7 @@ class AnalyzeDiagramUseCaseTest {
         }
 
         @Test
-        @DisplayName("Should publish error status when IA returns null components list")
+        @DisplayName("Should publish FAILED status when IA returns null components list")
         void shouldPublishErrorWhenComponentsIsNull() {
             // Arrange
             UUID diagramId = UUID.randomUUID();
@@ -117,7 +117,29 @@ class AnalyzeDiagramUseCaseTest {
         }
 
         @Test
-        @DisplayName("Should publish error status when an exception occurs")
+        @DisplayName("Should publish FAILED status when base64 decoding fails")
+        void shouldPublishErrorWhenBase64Fails() {
+            // Arrange
+            UUID diagramId = UUID.randomUUID();
+            ProcessDiagramInput input = ProcessDiagramInput.builder()
+                    .diagramId(diagramId)
+                    .data("not-a-base64-!") // Invalid chars
+                    .build();
+
+            // Act
+            analyzeDiagramUseCase.execute(input);
+
+            // Assert
+            verify(messagePublisherGateway, times(1)).publishStatus(
+                    eq(diagramId),
+                    eq("FAILED"),
+                    isNull(),
+                    contains("Erro no processamento de IA")
+            );
+        }
+
+        @Test
+        @DisplayName("Should publish FAILED status when an exception occurs")
         void shouldPublishErrorOnException() {
             // Arrange
             UUID diagramId = UUID.randomUUID();
