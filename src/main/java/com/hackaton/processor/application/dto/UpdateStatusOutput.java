@@ -5,13 +5,12 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Builder
 public class UpdateStatusOutput {
     private String diagramId;
-    private String titulo;
+    private String title;
     private String status;
     private ReportDTO report;
     private LocalDateTime createdAt;
