@@ -32,7 +32,7 @@ public class SqsStatusPublisher implements MessagePublisherGateway {
 
         UpdateStatusOutput.UpdateStatusOutputBuilder builder = UpdateStatusOutput.builder()
                 .diagramId(diagramId.toString())
-                .titulo("Análise de Arquitetura Gerada")
+                .title("Análise de Arquitetura Gerada")
                 .status(status)
                 .createdAt(LocalDateTime.now())
                 .notes(notes);
