@@ -175,6 +175,9 @@ jobs:
             export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
             export AWS_DEFAULT_REGION=us-east-1
             
+            # Limpeza seletiva de imagens não utilizadas para liberar espaço, preservando containers parados
+            docker image prune -f
+            
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
             
             docker pull $ECR_REGISTRY/hackaton-processor-api:$IMAGE_TAG
