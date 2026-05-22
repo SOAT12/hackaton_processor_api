@@ -18,7 +18,7 @@ spring:
   ai:
     gemini:
       api-key: ${GEMINI_API_KEY}
-      model-name: gemini-3.1-pro-preview
+      model-name: gemini-3.1-flash-lite
       timeout: 180s
 
 management:
