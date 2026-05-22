@@ -37,7 +37,7 @@ public class SqsConfig {
                 .region(Region.of(region))
                 .httpClientBuilder(NettyNioAsyncHttpClient.builder()
                         .connectionTimeout(Duration.ofSeconds(10))
-                        .readTimeout(Duration.ofSeconds(10)));
+                        .readTimeout(Duration.ofSeconds(30)));
 
         if (sessionToken != null && !sessionToken.isEmpty()) {
             builder.credentialsProvider(StaticCredentialsProvider.create(
